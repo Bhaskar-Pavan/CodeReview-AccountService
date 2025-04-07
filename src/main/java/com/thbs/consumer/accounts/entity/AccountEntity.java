@@ -22,10 +22,10 @@ public class AccountEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String email;
-    private String accountNumber;
+    private Long ID; 
+    private String name; 
+    private String Email; 
+    private String account_Number; 
     private String accountType;
     private LocalDate dob;
     private String bankCode;

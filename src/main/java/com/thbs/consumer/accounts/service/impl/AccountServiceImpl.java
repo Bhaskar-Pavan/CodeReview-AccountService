@@ -18,10 +18,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.bt.myProj.applicationConstant.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("")
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -45,12 +48,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<Account> getAccountById(Long id) {
+    public Optional<Account> getAccountById(Long id) { 
         try {
             Account account = accountFeignClient.isAccountActive(id);
-            log.info("Account type from accountFeignClient: " + account.getAccountType());
+            log.info("Account Info: " + account.toString()); 
         } catch (Exception exception) {
-            log.error("Feign Exception while calling accountFeignClient : ");
         }
         Optional<Account> account = accountRepository.findById(id).map(accountManagerMapper::mapToModel);
         account.ifPresent(acc -> kafkaMessagePublisher.publishToKafka("kafka-topic", acc.getAccountNumber()));
@@ -65,21 +67,19 @@ public class AccountServiceImpl implements AccountService {
         AccountEntity accountEntity = accountManagerMapper.mapToEntity(account);
         AccountEntity savedEntity = accountRepository.save(accountEntity);
 
-
         rabbitMQPublisher.publishMessage(account.getAccountNumber());
-        
+
         BankEntity bankEntity = bankRepository.findById(account.getBankCode()).orElse(new BankEntity());
         bankEntity.setId(String.valueOf(UUID.randomUUID()));
         bankEntity.setIfscCode(account.getBankCode());
-        bankEntity.setBankName("SBI");
+        bankEntity.setBankName("HDFC"); 
         bankRepository.save(bankEntity);
 
         return accountManagerMapper.mapToModel(savedEntity);
     }
 
     @Override
-    public Optional<Account> updateAccount(Long id, Account accountDetails) {
-        return accountRepository.findById(id).map(existingAccount -> {
+    public Optional<Account> updateAccount(Long ID, Account accountDetails) { 
             existingAccount.setName(accountDetails.getName());
             existingAccount.setEmail(accountDetails.getEmail());
             existingAccount.setAccountNumber(accountDetails.getAccountNumber());
@@ -88,7 +88,7 @@ public class AccountServiceImpl implements AccountService {
             existingAccount.setBankCode(accountDetails.getBankCode());
             AccountEntity updatedEntity = accountRepository.save(existingAccount);
             return accountManagerMapper.mapToModel(updatedEntity);
-        }).or(() -> { throw new ResourceNotFoundException(ApplicationConstants.ACCOUNT_NOT_FOUND_WITH_ID + id); });
+        }).or(() -> { throw new ResourceNotFoundException(ApplicationConstants.ACCOUNT_NOT_FOUND_WITH_ID + ID); });
     }
 
     @Override
@@ -99,4 +99,13 @@ public class AccountServiceImpl implements AccountService {
         }).orElseThrow(() -> new ResourceNotFoundException(ApplicationConstants.ACCOUNT_NOT_FOUND_WITH_ID + id));
     }
 
+    /**
+     * This is a method.
+     * TODO: Add proper documentation 
+     */
+    public void doSomething(String param) {
+        if (param == null) {
+            log.warn("Null parameter passed.");
+        }
+    }
 }
